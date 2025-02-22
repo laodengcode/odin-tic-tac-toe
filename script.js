@@ -1,194 +1,143 @@
-function Player(name) {
-    let isTurn = false;
+const Gameboard = (() => {
+    let board = Array(9).fill(0);
 
-    function toggleTurn() {
-        isTurn = !isTurn;
-    }
-
-    function shouldPlay() {
-        return isTurn;
-    }
-
-    function displayName() {
-        return name;
-    }
-
-    function changeName(newName) {
-        name = newName;
-    }
-
-    return { toggleTurn, shouldPlay, displayName, changeName };
-}
-
-
-function GameBoard(playerA, playerB, isSingleMode) {
-    let gameGrid = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-    playerA.toggleTurn();
-
-    function setUserLocation(index) {
-        if (index < 0 || index > 8) {
-            alert("Wrong number");
+    const getBoard = () => [...board];
+    const resetBoard = () => board.fill(0);
+    const setMove = (index, marker) => {
+        if (board[index] === 0) {
+            board[index] = marker;
+            return true;
         }
-
-        if (isTaken(index)) return;
-
-        if (playerA.shouldPlay()) {
-            gameGrid[index] = 1;
-        } else if (playerB.shouldPlay()) {
-            if (!isSingleMode) {
-                gameGrid[index] = 2;
+        return false;
+    };
+    const isFull = () => board.every(cell => cell !== 0);
+    const checkWinner = () => {
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+        for (const [a, b, c] of winningCombinations) {
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                return board[a];
             }
-        } else {
-            alert("Internal error");
-            return;
         }
+        return isFull() ? null : 0;
+    };
+    return { getBoard, resetBoard, setMove, checkWinner };
+})();
 
-        playerA.toggleTurn();
-        playerB.toggleTurn();
-        console.log(gameGrid);
-        render(gameGrid)
+const Player = (name, marker) => {
+    return { name, marker };
+};
 
-        let result = judge();
-        if (result !== 0) {
-            renderResult(result)
-            return;
+const GameController = (() => {
+    let player1 = Player("Player 1", 1);
+    let player2 = Player("Player 2", 2);
+    let currentPlayer = player1;
+    let isSingleMode = true;
+
+    const switchPlayer = () => {
+        currentPlayer = currentPlayer === player1 ? player2 : player1;
+    };
+
+    const handleMove = (index) => {
+        if (Gameboard.setMove(index, currentPlayer.marker)) {
+            DisplayController.render();
+            const winner = Gameboard.checkWinner();
+            if (winner !== 0) {
+                DisplayController.displayResult(winner, player1.name, player2.name);
+                return;
+            }
+            switchPlayer();
+            if (isSingleMode && currentPlayer === player2) {
+                setTimeout(computerMove, 100);
+            }
         }
+    };
 
-        if (isSingleMode) {
-            setTimeout(computerMove, 500);
-        }
-    }
-
-    function isTaken(index) {
-        return gameGrid.at(index) !== 0;
-    }
-
-    function computerMove() {
-        for (let i = 0; i < gameGrid.length; i++) {
-            if (gameGrid.at(i) === 0) {
-                gameGrid[i] = 2;
+    const computerMove = () => {
+        for (let i = 0; i < 9; i++) {
+            if (Gameboard.setMove(i, player2.marker)) {
+                DisplayController.render();
+                const winner = Gameboard.checkWinner();
+                if (winner !== 0) {
+                    DisplayController.displayResult(winner, player1.name, player2.name);
+                    return;
+                }
+                switchPlayer();
                 break;
             }
         }
+    };
 
-        playerA.toggleTurn();
-        playerB.toggleTurn();
-        console.log(gameGrid);
-        render(gameGrid)
+    const startNewGame = () => {
+        Gameboard.resetBoard();
+        currentPlayer = player1;
+        DisplayController.render();
+        DisplayController.displayResult(0, player1.name, player2.name);
+    };
 
-        let result = judge();
-        if (result !== 0) {
-            renderResult(result);
-        }
-    }
+    const setGameMode = (singleMode) => {
+        isSingleMode = singleMode;
+    };
 
-    function reset() {
-        gameGrid.fill(0);
-        isUserTurn = true;
-        render(gameGrid)
-        renderResult(0);
+    const setPlayerNames = (name1, name2) => {
+        player1.name = name1 || "Player 1";
+        player2.name = name2 || "Player 2";
+    };
 
-        if (!a.shouldPlay()) { a.toggleTurn() }
-        if (b.shouldPlay()) { b.toggleTurn() }
-    }
+    return { handleMove, startNewGame, setGameMode, setPlayerNames };
+})();
 
-    function judge() {
-        for (let i = 0; i < 3; i++) {
-            if (gameGrid[i] === gameGrid[i + 3] && gameGrid[i + 3] === gameGrid[i + 6] && gameGrid[i] !== 0) {
-                return gameGrid[i];
-            }
-        }
+const DisplayController = (() => {
+    const cells = document.querySelectorAll("[data-cell]");
+    const resultDisplay = document.querySelector("h2");
 
-        for (let i = 0; i < 7; i += 3) {
-            if (gameGrid[i] === gameGrid[i + 1] && gameGrid[i + 1] === gameGrid[i + 2] && gameGrid[i] !== 0) {
-                return gameGrid[i];
-            }
-        }
+    cells.forEach(cell => {
+        cell.addEventListener("click", (e) => {
+            GameController.handleMove(e.target.dataset.cell);
+        });
+    });
 
-        if (((gameGrid[0] === gameGrid[4] && gameGrid[4] === gameGrid[8]) || (gameGrid[2] === gameGrid[4] && gameGrid[4] === gameGrid[6])) && gameGrid[4] !== 0) {
-            return gameGrid[4];
-        }
+    document.querySelector("#newGame").addEventListener("click", () => {
+        GameController.startNewGame();
+    });
 
-        if (gameGrid.includes(0)) {
-            return 0;
-        } else {
-            return null;
-        }
-    }
+    document.querySelector("#single").addEventListener("change", () => {
+        GameController.setGameMode(true);
+    });
 
-    function render() {
-        let elements = document.querySelectorAll("p");
+    document.querySelector("#double").addEventListener("change", () => {
+        GameController.setGameMode(false);
+    });
 
-        elements.forEach((i) => {
-            let value = gameGrid.at(parseInt(i.getAttribute("data-cell")))
-            if (value === 1) {
-                i.textContent = "X";
-            } else if (value === 2) {
-                i.textContent = "O";
-            } else {
-                i.textContent = "";
-            }
-        })
-    }
+    document.querySelector("#player1").addEventListener("change", (e) => {
+        GameController.setPlayerNames(e.target.value, document.querySelector("#player2").value);
+    });
 
-    function renderResult(result) {
-        let container = document.querySelector("h2");
-        let text = "";
+    document.querySelector("#player2").addEventListener("change", (e) => {
+        GameController.setPlayerNames(document.querySelector("#player1").value, e.target.value);
+    });
+
+    const render = () => {
+        const board = Gameboard.getBoard();
+        cells.forEach((cell, index) => {
+            cell.textContent = board[index] === 1 ? "X" : board[index] === 2 ? "O" : "";
+        });
+    };
+
+    const displayResult = (result, name1, name2) => {
         if (result === null) {
-            text = "Even!";
+            resultDisplay.textContent = "It's a draw!";
         } else if (result === 0) {
-            text = "";
+            resultDisplay.textContent = "";
         } else {
-            text = "Winner is " + (result === 1 ? playerA.displayName() : playerB.displayName());
+            resultDisplay.textContent = `Winner is ${result === 1 ? name1 : name2}!`;
         }
-        container.textContent = text;
-    }
+    };
 
-    function activateSingleMode() {
-        isSingleMode = true;
-    }
+    return { render, displayResult };
+})();
 
-    function activateDoubleMode() {
-        isSingleMode = false;
-    }
-
-    return { setUserLocation, reset, activateSingleMode, activateDoubleMode }
-}
-
-
-
-let a = Player("Player1");
-let b = Player("Player2");
-
-let newGame = GameBoard(a, b, true);
-
-document.querySelector(".container").addEventListener("click", (event) => {
-    if (event.target.matches("p")) {
-        let inputIndex = event.target.getAttribute("data-cell");
-        newGame.setUserLocation(inputIndex);
-    }
-})
-
-document.querySelector("#newGame").addEventListener("click", (event) => {
-    newGame.reset();
-})
-
-document.querySelector("#single").addEventListener("change", (event) => {
-    if (event.target.checked) {
-        newGame.activateSingleMode();
-    }
-});
-
-document.querySelector("#double").addEventListener("change", (event) => {
-    if (event.target.checked) {
-        newGame.activateDoubleMode();
-    }
-})
-
-document.querySelector("#player1").addEventListener("change", (event) => {
-    a.changeName(event.target.value);
-})
-
-document.querySelector("#player2").addEventListener("change", (event) => {
-    b.changeName(event.target.value);
-})
+GameController.startNewGame();
