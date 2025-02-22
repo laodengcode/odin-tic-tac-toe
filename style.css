@@ -11,7 +11,7 @@ body {
     align-items: center;
 }
 
-section {
+.container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
@@ -37,4 +37,11 @@ p {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.mode {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 24px;
 }
