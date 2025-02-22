@@ -25,12 +25,22 @@
     </section>
     <section class="mode">
         <div class="option">
-            <input type="radio" name="single" id="single" checked>
+            <input type="radio" name="playmode" id="single" checked>
             <label for="single">Single Player</label>
         </div>
         <div class="option">
-            <input type="radio" name="double" id="double">
+            <input type="radio" name="playmode" id="double">
             <label for="double">Double Players</label>
+        </div>
+    </section>
+    <section class="players">
+        <div class="playername">
+            <label for="player1">Player 1</label>
+            <input type="text" name="player1" id="player1" placeholder="Enter your name">
+        </div>
+        <div class="playername">
+            <label for="player2">Player 2</label>
+            <input type="text" name="player2" id="player2" placeholder="Enter your name">
         </div>
     </section>
     <button type="button" id="newGame">Start New Game</button>

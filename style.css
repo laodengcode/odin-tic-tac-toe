@@ -11,7 +11,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100%;
-    gap: 12px;
+    gap: 24px;
 }
 
 .container {
@@ -46,7 +46,6 @@ p {
     display: flex;
     justify-content: center;
     gap: 24px;
-    margin: 24px;
 }
 
 #newGame {
@@ -57,4 +56,14 @@ p {
     width: 192px;
     height: 24px;
     font-size: medium;
+}
+
+.players {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+input {
+    border-radius: 8px;
 }

@@ -1,17 +1,50 @@
-function gameBoard() {
+function Player(name) {
+    let isTurn = false;
+
+    function toggleTurn() {
+        isTurn = !isTurn;
+    }
+
+    function shouldPlay() {
+        return isTurn;
+    }
+
+    function displayName() {
+        return name;
+    }
+
+    function changeName(newName) {
+        name = newName;
+    }
+
+    return { toggleTurn, shouldPlay, displayName, changeName };
+}
+
+
+function GameBoard(playerA, playerB, isSingleMode) {
     let gameGrid = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let isUserTurn = true;
+    playerA.toggleTurn();
 
     function setUserLocation(index) {
         if (index < 0 || index > 8) {
             alert("Wrong number");
         }
 
-        if (!isUserTurn) return;
         if (isTaken(index)) return;
 
-        let userLocation = index;
-        gameGrid[userLocation] = 1;
+        if (playerA.shouldPlay()) {
+            gameGrid[index] = 1;
+        } else if (playerB.shouldPlay()) {
+            if (!isSingleMode) {
+                gameGrid[index] = 2;
+            }
+        } else {
+            alert("Internal error");
+            return;
+        }
+
+        playerA.toggleTurn();
+        playerB.toggleTurn();
         console.log(gameGrid);
         render(gameGrid)
 
@@ -21,7 +54,9 @@ function gameBoard() {
             return;
         }
 
-        setTimeout(computerMove, 500);
+        if (isSingleMode) {
+            setTimeout(computerMove, 500);
+        }
     }
 
     function isTaken(index) {
@@ -36,6 +71,8 @@ function gameBoard() {
             }
         }
 
+        playerA.toggleTurn();
+        playerB.toggleTurn();
         console.log(gameGrid);
         render(gameGrid)
 
@@ -49,6 +86,10 @@ function gameBoard() {
         gameGrid.fill(0);
         isUserTurn = true;
         render(gameGrid)
+        renderResult(0);
+
+        if (!a.shouldPlay()) { a.toggleTurn() }
+        if (b.shouldPlay()) { b.toggleTurn() }
     }
 
     function judge() {
@@ -95,19 +136,31 @@ function gameBoard() {
         let text = "";
         if (result === null) {
             text = "Even!";
+        } else if (result === 0) {
+            text = "";
         } else {
-            text = "Winner is " + result;
+            text = "Winner is " + (result === 1 ? playerA.displayName() : playerB.displayName());
         }
         container.textContent = text;
     }
 
-    return { setUserLocation, reset }
+    function activateSingleMode() {
+        isSingleMode = true;
+    }
+
+    function activateDoubleMode() {
+        isSingleMode = false;
+    }
+
+    return { setUserLocation, reset, activateSingleMode, activateDoubleMode }
 }
 
 
 
+let a = Player("Player1");
+let b = Player("Player2");
 
-let newGame = gameBoard();
+let newGame = GameBoard(a, b, true);
 
 document.querySelector(".container").addEventListener("click", (event) => {
     if (event.target.matches("p")) {
@@ -118,4 +171,24 @@ document.querySelector(".container").addEventListener("click", (event) => {
 
 document.querySelector("#newGame").addEventListener("click", (event) => {
     newGame.reset();
+})
+
+document.querySelector("#single").addEventListener("change", (event) => {
+    if (event.target.checked) {
+        newGame.activateSingleMode();
+    }
+});
+
+document.querySelector("#double").addEventListener("change", (event) => {
+    if (event.target.checked) {
+        newGame.activateDoubleMode();
+    }
+})
+
+document.querySelector("#player1").addEventListener("change", (event) => {
+    a.changeName(event.target.value);
+})
+
+document.querySelector("#player2").addEventListener("change", (event) => {
+    b.changeName(event.target.value);
 })
