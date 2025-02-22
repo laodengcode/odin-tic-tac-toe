@@ -8,9 +8,12 @@ function gameBoard() {
         }
 
         if (!isUserTurn) return;
+        if (isTaken(index)) return;
+
         let userLocation = index;
         gameGrid[userLocation] = 1;
         console.log(gameGrid);
+        render(gameGrid)
         let result = judge();
         if (result !== 0) {
             let winner = result === null ? "Even" : result;
@@ -22,6 +25,10 @@ function gameBoard() {
         setTimeout(computerMove, 500);
     }
 
+    function isTaken(index) {
+        return gameGrid.at(index) !== 0;
+    }
+
     function computerMove() {
         for (let i = 0; i < gameGrid.length; i++) {
             if (gameGrid.at(i) === 0) {
@@ -31,6 +38,7 @@ function gameBoard() {
         }
 
         console.log(gameGrid);
+        render(gameGrid)
 
         let result = judge();
         if (result !== 0) {
@@ -38,17 +46,13 @@ function gameBoard() {
             console.log(winner);
             reset();
         }
-
-        isUserTurn = true;
     }
 
     function reset() {
         gameGrid.fill(0);
         isUserTurn = true;
+        render(gameGrid)
     }
-
-
-
 
     function judge() {
         for (let i = 0; i < 3; i++) {
@@ -67,23 +71,40 @@ function gameBoard() {
             return gameGrid[4];
         }
 
-        if (gameGrid.find(item => item === 0) === 0) {
+        if (gameGrid.includes(0)) {
             return 0;
         } else {
             return null;
         }
     }
 
+    function currentBoard() {
+        return gameGrid.slice();
+    }
 
+    return { setUserLocation, currentBoard }
+}
 
+function render(grid) {
+    let elements = document.querySelectorAll("p");
 
-    return { setUserLocation }
+    elements.forEach((i) => {
+        let value = grid.at(parseInt(i.getAttribute("data-cell")))
+        if (value === 1) {
+            i.textContent = "X";
+        } else if (value === 2) {
+            i.textContent = "O";
+        } else {
+            i.textContent = "";
+        }
+    })
 }
 
 let newGame = gameBoard();
 
 document.querySelector(".container").addEventListener("click", (event) => {
     if (event.target.matches("p")) {
-        console.log(event.target.getAttribute("data-cell"));
+        let inputIndex = event.target.getAttribute("data-cell");
+        newGame.setUserLocation(inputIndex);
     }
 })
